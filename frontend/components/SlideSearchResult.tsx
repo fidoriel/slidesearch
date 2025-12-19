@@ -1,18 +1,20 @@
-import { useState, useEffect, useRef } from "react";
+import React from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "./ui/card";
 import { Button } from "./ui/button";
 import {
   BookOpen,
   FileText,
-  ChevronLeft,
-  ChevronRight,
-  ZoomIn,
-  ZoomOut,
   ExternalLink,
+  ChevronDown,
 } from "lucide-react";
-import { useToast } from "../hooks/use-toast";
+
 import { SimplePDFPreview } from "./SimplePDFPreview";
 import { BACKEND_BASE_URL } from "../lib/api";
+import {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+} from "./ui/collapsible";
 
 interface SlideSearchResultProps {
   slide: {
@@ -42,8 +44,6 @@ export function SlideSearchResult({
   isSelected,
   onSelect,
 }: SlideSearchResultProps) {
-  const { toast } = useToast();
-
   const highlightText = (text: string, term: string) => {
     if (!term.trim()) return text;
 
@@ -60,7 +60,7 @@ export function SlideSearchResult({
   };
 
   return (
-    <Card className={`mb-6 ${isSelected ? "border-primary" : "border-border"}`}>
+  <Card className="mb-6">
       <CardHeader className="pb-2 cursor-pointer" onClick={onSelect}>
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2">
@@ -149,14 +149,35 @@ export function SlideSearchResult({
               <div className="bg-muted p-3 rounded-lg min-h-[150px]">
                 <p className="text-sm">
                   {highlightText(
-                    slide.content_scrape ||
-                      slide.content_ocr ||
-                      "No content available",
+                    slide.content_scrape || "No content available",
                     searchTerm,
                   )}
                 </p>
               </div>
             </div>
+
+            {slide.content_ocr && (
+              <div className="space-y-2">
+                <Collapsible>
+                  <CollapsibleTrigger className="w-full">
+                    <div className="flex items-center justify-between p-3 bg-muted rounded-lg hover:bg-muted/80 transition-colors">
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-4 w-4" />
+                        <span className="font-medium">OCR Content</span>
+                      </div>
+                      <ChevronDown className="h-4 w-4 transition-transform duration-300 data-[state=open]:rotate-180" />
+                    </div>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="collapsible-content">
+                    <div className="bg-muted p-3 rounded-lg mt-2 border-l-2 border-primary">
+                      <p className="text-sm">
+                        {highlightText(slide.content_ocr, searchTerm)}
+                      </p>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              </div>
+            )}
           </div>
         </div>
       </CardContent>

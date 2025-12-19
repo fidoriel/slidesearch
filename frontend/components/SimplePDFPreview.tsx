@@ -20,16 +20,14 @@ export function SimplePDFPreview({
   deckId,
   pageNumber,
   deckName,
-  width = 400,
-  height = 300,
+  width = 800,
+  height = 600,
 }: SimplePDFPreviewProps) {
   const [status, setStatus] = useState<"idle" | "loading" | "loaded" | "error">(
     "idle",
   );
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  // Removed isMounted state, not needed
 
   useEffect(() => {
     let isActive = true;
@@ -134,11 +132,13 @@ export function SimplePDFPreview({
         )}
       </div>
 
-      <div className="bg-muted rounded-lg overflow-hidden relative">
+      <div
+        className="bg-muted rounded-lg overflow-hidden relative flex items-center justify-center aspect-[16/9] w-full"
+      >
         <canvas
           ref={canvasRef}
-          className={`w-full h-auto ${status === "loaded" ? "block" : "hidden"}`}
-          style={{ maxWidth: `${width}px`, maxHeight: `${height}px` }}
+          className={`w-full h-full object-cover ${status === "loaded" ? "block" : "hidden"}`}
+          style={{ aspectRatio: "16/9" }}
         />
 
         {status === "loading" && (
