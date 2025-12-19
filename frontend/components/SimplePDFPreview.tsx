@@ -134,7 +134,13 @@ export function SimplePDFPreview({
         )}
       </div>
 
-      <div className="bg-muted rounded-lg overflow-hidden">
+      <div className="bg-muted rounded-lg overflow-hidden relative">
+        <canvas
+          ref={canvasRef}
+          className={`w-full h-auto ${status === "loaded" ? "block" : "hidden"}`}
+          style={{ maxWidth: `${width}px`, maxHeight: `${height}px` }}
+        />
+
         {status === "loading" && (
           <div className="flex flex-col items-center justify-center h-80">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-3"></div>
@@ -165,14 +171,6 @@ export function SimplePDFPreview({
               Open Full PDF
             </Button>
           </div>
-        )}
-
-        {status === "loaded" && (
-          <canvas
-            ref={canvasRef}
-            className="w-full h-auto"
-            style={{ maxWidth: `${width}px`, maxHeight: `${height}px` }}
-          />
         )}
 
         {status === "idle" && (
