@@ -123,6 +123,7 @@ class Slide(BaseModel, StorageMixin):
         docs = [slide.model_dump() for slide in slides]
         index.add_documents(docs)
 
+
 class SlideDeck(BaseModel, StorageMixin):
     VALKEY_OBJECT_PATH: ClassVar[str] = "slidedeck"
     uuid: UUID = Field(default_factory=uuid4)
@@ -133,6 +134,7 @@ class SlideDeck(BaseModel, StorageMixin):
     @property
     def path(self) -> Path:
         return config.DATA_DIR / f"{self.uuid}.pdf"
+
 
 class LectureSeries(BaseModel, StorageMixin):
     VALKEY_OBJECT_PATH: ClassVar[str] = "lectureseries"
@@ -166,7 +168,9 @@ def search_slides(query_text: str, decks: list[SlideDeck] | None = None) -> list
         if len(decks) == 0:
             return []
         deck_uuids = [str(d.uuid) for d in decks]
-        filter_query = [f'deck_uuid = "{u}"' for u in deck_uuids]
+        filter_query = [
+            [f'deck_uuid = "{u}"' for u in deck_uuids]
+        ]  # double list is needed for OR
         results = index.search(query_text, {"filter": filter_query})
     else:
         results = index.search(query_text)
