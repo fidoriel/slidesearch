@@ -1,0 +1,36 @@
+services:
+  valkey:
+    image: valkey/valkey-bundle
+    ports:
+      - "6380:6379"
+    command: ["valkey-server", "--save", "30", "1"]
+
+  # ollama:
+  #   volumes:
+  #     - ~/.ollama/:/root/.ollama
+  #   container_name: ollama
+  #   pull_policy: always
+  #   tty: true
+  #   restart: unless-stopped
+  #   image: docker.io/ollama/ollama:latest
+  #   ports:
+  #     - 7869:11434
+  #   environment:
+  #     - OLLAMA_KEEP_ALIVE=24h
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - driver: nvidia
+  #             count: all 
+  #             capabilities: [gpu]
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.16
+    container_name: meilisearch
+    ports:
+      - "7700:7700"
+    volumes:
+      - ./meili_data:/meili_data
+    command: meilisearch
+    restart: unless-stopped
