@@ -4,11 +4,12 @@ from pathlib import Path
 from .config import config
 from valkey import Valkey
 import meilisearch
-from typing import Type, TypeVar, Optional, ClassVar
+from typing import Type, TypeVar, ClassVar
 from pydantic import field_serializer
 from uuid import uuid4
 import json
 from uuid import UUID
+import time
 
 
 class UUIDEncoder(json.JSONEncoder):
@@ -24,10 +25,23 @@ valkey = Valkey()
 search = meilisearch.Client(
     url=f"http://{config.MEILISEARCH_HOST}:{config.MEILISEARCH_PORT}",
 )
-try:
-    index = search.get_index('slides')
-except meilisearch.errors.MeilisearchApiError:
-    index = search.create_index('slides', {'primaryKey': 'uuid'})
+
+def get_index():
+    try:
+        index = search.get_index('slides')
+        return index
+    except meilisearch.errors.MeilisearchApiError:
+        search.create_index('slides', {'primaryKey': 'uuid'})
+        for _ in range(5):
+            try:
+                index = search.get_index('slides')
+                return index
+            except meilisearch.errors.MeilisearchApiError:
+                time.sleep(0.2)
+        else:
+            raise RuntimeError("MeiliSearch index 'slides' could not be created or fetched.")
+        
+index = get_index()
 index.update_filterable_attributes([
   'uuid',
   'deck_uuid'

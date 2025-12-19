@@ -82,15 +82,15 @@ export function SlideSearchResult({
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Left Column: PDF Preview */}
-          <div className="space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column: PDF Preview (2/3 width on large screens) */}
+          <div className="space-y-4 lg:col-span-2">
             <SimplePDFPreview
               deckId={slide.deck_uuid}
               pageNumber={slide.number}
               deckName={slide.deck?.name}
-              width={500}
-              height={400}
+              width={600}
+              height={500}
             />
 
             <div className="flex justify-center">
@@ -112,8 +112,8 @@ export function SlideSearchResult({
             </div>
           </div>
 
-          {/* Right Column: Slide Details and Content */}
-          <div className="space-y-6">
+          {/* Right Column: Slide Details and Content (1/3 width on large screens) */}
+          <div className="space-y-6 lg:col-span-1">
             {/* Slide Information */}
             <div className="space-y-3">
               <h3 className="font-medium flex items-center gap-2">

@@ -142,7 +142,7 @@ export function SimplePDFPreview({
         />
 
         {status === "loading" && (
-          <div className="flex flex-col items-center justify-center h-80">
+          <div className="flex flex-col items-center justify-center h-[500px]">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-3"></div>
             <p className="text-sm text-muted-foreground">
               Loading PDF preview...
@@ -151,7 +151,7 @@ export function SimplePDFPreview({
         )}
 
         {status === "error" && (
-          <div className="flex flex-col items-center justify-center h-80 text-center p-4">
+          <div className="flex flex-col items-center justify-center h-[500px] text-center p-4">
             <p className="text-sm text-destructive mb-3">
               Failed to load preview
             </p>
@@ -174,7 +174,7 @@ export function SimplePDFPreview({
         )}
 
         {status === "idle" && (
-          <div className="flex items-center justify-center h-80">
+          <div className="flex items-center justify-center h-[500px]">
             <div className="animate-pulse">
               <div className="w-16 h-16 bg-primary/20 rounded-lg"></div>
             </div>

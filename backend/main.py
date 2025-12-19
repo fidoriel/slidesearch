@@ -22,7 +22,10 @@ app.add_middleware(
 )
 
 @api_router.post("/lecture-series/", response_model=LectureSeries)
-async def create_lecture_series(name: str) -> LectureSeries:
+async def create_lecture_series(lecture_series_data: dict) -> LectureSeries:
+    name = lecture_series_data.get("name")
+    if not name:
+        raise HTTPException(status_code=422, detail="Name is required")
     series = LectureSeries(uuid=uuid4(), name=name)
     series.save()
     return series
@@ -55,7 +58,7 @@ async def upload_deck_to_lecture_series(
     if not series:
         raise HTTPException(status_code=404, detail="Lecture series not found")
     deck_bytes = await file.read()
-    await process_slide_deck(series, deck_bytes)
+    await process_slide_deck(series, deck_bytes, file.filename)
     return {"message": "Slide deck uploaded and processed successfully"}
 
 @api_router.put("/slide-decks/{deck_id}", response_model=SlideDeck)

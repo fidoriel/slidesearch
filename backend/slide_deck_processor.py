@@ -52,11 +52,12 @@ async def call_openai_ocr(slide: bytes) -> str:
     )
     return response.choices[0].message.content
 
-async def process_slide_deck(series: LectureSeries, deck_bytes: bytes):
+async def process_slide_deck(series: LectureSeries, deck_bytes: bytes, filename: str = ""):
+    deck_name = filename.rsplit('.', 1)[0] if filename else ""
     deck = SlideDeck(
         series_uuid=series.uuid,
         file_hash=hashlib.sha256(deck_bytes).hexdigest(),
-        name="",
+        name=deck_name,
         path=config.DATA_DIR / f"{uuid4()}.pdf"
     )
     with open(deck.path, "wb") as f:
