@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "./ui/card";
-import { Search, BookOpen, FileText, ChevronRight } from "lucide-react";
+import { Card, CardContent } from "./ui/card";
+import { Search } from "lucide-react";
 import { BACKEND_BASE_URL } from "../lib/api";
 import { useToast } from "../hooks/use-toast";
 import { SlideSearchResult } from "./SlideSearchResult";
@@ -32,7 +32,7 @@ interface LectureSeries {
 export function SearchInterface() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Slide[]>([]);
-  const [selectedSlide, setSelectedSlide] = useState<Slide | null>(null);
+  const [_, setSelectedSlide] = useState<Slide | null>(null);
   const [lectureSeries, setLectureSeries] = useState<LectureSeries[]>([]);
   const [selectedSeries, setSelectedSeries] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -68,7 +68,7 @@ export function SearchInterface() {
       let url = `${BACKEND_BASE_URL}/api/search?query=${encodeURIComponent(searchQuery)}`;
 
       if (selectedSeries.length > 0) {
-        const seriesParams = selectedSeries.map((s) => `decks=${s}`).join("&");
+        const seriesParams = selectedSeries.map((s) => `series=${s}`).join("&");
         url += `&${seriesParams}`;
       }
 
@@ -138,86 +138,102 @@ export function SearchInterface() {
     }
   };
 
+  // Retrigger search when selectedSeries changes
+  useEffect(() => {
+    // Only retrigger if a search has already been performed (searchQuery is not empty)
+    if (searchQuery.trim()) {
+      handleSearch();
+    }
+  }, [selectedSeries]);
+
   return (
-    <div className="space-y-6">
-      <div className="space-y-4">
-        <div className="flex gap-2">
-          <Input
-            type="text"
-            placeholder="Search slides by content..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={handleKeyDown}
-            className="flex-1"
-          />
-          <Button
-            onClick={handleSearch}
-            disabled={!searchQuery.trim() || loading}
-          >
-            <Search className="mr-2 h-4 w-4" />
-            {loading ? "Searching..." : "Search"}
-          </Button>
-        </div>
-        <p className="text-sm text-muted-foreground mt-1">
-          Search through all slide content. Use the filter panel to narrow down
-          by lecture series.
-        </p>
+    <div className="space-y-8 px-4 pb-10">
+      <div className="z-10 sticky top-24 bg-background">
+        <Card className="border">
+          <CardContent className="p-4">
+            <div className="space-y-3">
+              <div className="flex gap-3 pb-3">
+                <Input
+                  type="text"
+                  placeholder="Search slides by content..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  className="flex-1 h-8"
+                />
+                <Button
+                  onClick={handleSearch}
+                  disabled={!searchQuery.trim() || loading}
+                  className="h-8"
+                >
+                  <Search className="mr-2 h-4 w-4" />
+                  {loading ? "Searching..." : "Search"}
+                </Button>
+              </div>
+              <div className="flex flex-row flex-wrap items-center gap-3 min-h-[40px]">
+                <span className="font-semibold mr-2">
+                  Filter by Lecture Series
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mr-2"
+                  onClick={() => setSelectedSeries([])}
+                  disabled={selectedSeries.length === 0}
+                >
+                  Remove Filter
+                </Button>
+                <div className="flex flex-row flex-wrap items-center gap-2">
+                  {lectureSeries.map((series) => {
+                    const isSelected = selectedSeries.includes(series.uuid);
+                    return (
+                      <div
+                        key={series.uuid}
+                        className={`flex items-center justify-center rounded cursor-pointer whitespace-nowrap transition-all duration-150 px-4 py-2 text-sm font-medium
+                          ${isSelected ? "bg-primary text-primary-foreground font-bold shadow-lg" : "hover:bg-secondary text-muted-foreground"}`}
+                        style={{ minWidth: "48px", minHeight: "40px" }}
+                        onClick={() => toggleSeriesSelection(series.uuid)}
+                      >
+                        <span className="flex items-center justify-center w-full h-full">
+                          {series.name}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="gap-6">
-        {/* <div className="lg:col-span-1 space-y-4">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Filter by Lecture Series</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-2">
-                                {lectureSeries.map((series) => (
-                                    <div 
-                                        key={series.uuid}
-                                        className={`flex items-center justify-between p-2 rounded cursor-pointer ${selectedSeries.includes(series.uuid) ? "bg-primary text-primary-foreground" : "hover:bg-secondary"}`}
-                                        onClick={() => toggleSeriesSelection(series.uuid)}
-                                    >
-                                        <span className="text-sm">{series.name}</span>
-                                        {selectedSeries.includes(series.uuid) && (
-                                            <ChevronRight className="h-4 w-4" />
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div> */}
+      <div className="space-y-6 mt-4">
+        {loading && (
+          <div className="flex justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        )}
 
-        <div className="space-y-4">
-          {loading && (
-            <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-          )}
+        {!loading && searchResults.length === 0 && searchQuery.trim() && (
+          <Card>
+            <CardContent className="text-center py-8">
+              <p className="text-muted-foreground">No results found</p>
+            </CardContent>
+          </Card>
+        )}
 
-          {!loading && searchResults.length === 0 && searchQuery.trim() && (
-            <Card>
-              <CardContent className="text-center py-8">
-                <p className="text-muted-foreground">No results found</p>
-              </CardContent>
-            </Card>
-          )}
-
-          {!loading && searchResults.length > 0 && (
-            <div className="space-y-4">
-              {searchResults.map((slide) => (
-                <SlideSearchResult
-                  key={slide.uuid}
-                  slide={slide}
-                  searchTerm={searchQuery}
-                  isSelected={selectedSlide?.uuid === slide.uuid}
-                  onSelect={() => setSelectedSlide(slide)}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+        {!loading && searchResults.length > 0 && (
+          <div className="space-y-4">
+            {searchResults.map((slide) => (
+              <SlideSearchResult
+                key={slide.uuid}
+                slide={slide}
+                searchTerm={searchQuery}
+                onSelect={() => setSelectedSlide(slide)}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

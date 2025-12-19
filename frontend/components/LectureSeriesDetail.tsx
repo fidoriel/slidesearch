@@ -6,7 +6,6 @@ import { ArrowLeft, Trash2, Edit, Save, X, FileText } from "lucide-react";
 import { BACKEND_BASE_URL } from "../lib/api";
 import { useToast } from "../hooks/use-toast";
 import Dropzone from "../Dropzone";
-import { SlideSearchResult } from "./SlideSearchResult";
 import { Input } from "./ui/input";
 
 interface SlideDeck {
@@ -64,7 +63,7 @@ export function LectureSeriesDetail() {
   const handleUpload = async (files: { pdfFiles: File[] }) => {
     if (!seriesId) return;
 
-    // Wir erwarten PDF-Dateien
+    // Only accept PDF files
     const pdfFiles = files.pdfFiles.filter((file) =>
       file.name.toLowerCase().endsWith(".pdf"),
     );
@@ -80,24 +79,22 @@ export function LectureSeriesDetail() {
 
     setUploading(true);
     try {
-      for (const file of pdfFiles) {
-        const formData = new FormData();
-        formData.append("file", file);
-
-        const response = await fetch(
-          `${BACKEND_BASE_URL}/api/lecture-series/${seriesId}/upload`,
-          {
-            method: "POST",
-            body: formData,
-          },
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to upload slide deck");
-        }
+      const formData = new FormData();
+      pdfFiles.forEach((file) => {
+        formData.append("files", file);
+      });
+      const response = await fetch(
+        `${BACKEND_BASE_URL}/api/lecture-series/${seriesId}/upload`,
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Failed to upload slide deck(s)");
       }
 
-      // Neu laden, um die neuen Slide Decks anzuzeigen
       await fetchSeries();
       toast({
         title: "Success",
@@ -198,9 +195,6 @@ export function LectureSeriesDetail() {
     if (!editingName?.trim() || !seriesId) return;
 
     try {
-      // Aktuell gibt es keinen direkten Endpunkt zum Aktualisieren des Namens
-      // Wir könnten einen neuen Endpunkt erstellen oder die Serie löschen und neu anlegen
-      // Für jetzt zeigen wir nur eine Nachricht
       toast({
         title: "Info",
         description: "Lecture series name update not yet implemented",

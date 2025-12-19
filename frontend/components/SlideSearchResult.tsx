@@ -1,10 +1,7 @@
-import React from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "./ui/card";
-import { Button } from "./ui/button";
-import { BookOpen, FileText, ExternalLink, ChevronDown } from "lucide-react";
+import { BookOpen, FileText, ChevronDown } from "lucide-react";
 
 import { SimplePDFPreview } from "./SimplePDFPreview";
-import { BACKEND_BASE_URL } from "../lib/api";
 import {
   Collapsible,
   CollapsibleTrigger,
@@ -29,14 +26,12 @@ interface SlideSearchResultProps {
     };
   };
   searchTerm: string;
-  isSelected: boolean;
   onSelect: () => void;
 }
 
 export function SlideSearchResult({
   slide,
   searchTerm,
-  isSelected,
   onSelect,
 }: SlideSearchResultProps) {
   const highlightText = (text: string, term: string) => {
@@ -55,30 +50,31 @@ export function SlideSearchResult({
   };
 
   return (
-    <Card className="mb-6">
+    <Card className="mb-6 border border-muted">
       <CardHeader className="pb-2 cursor-pointer" onClick={onSelect}>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <BookOpen className="h-5 w-5" />
-            Slide {slide.number}
+        <div className="flex items-center">
+          <BookOpen className="h-5 w-5 mr-2" />
+          <CardTitle className="text-lg flex flex-wrap items-center gap-2">
+            <span>
+              {slide.series?.name && (
+                <span className="font-semibold">{slide.series.name}</span>
+              )}
+              {slide.series?.name && slide.deck?.name && (
+                <span className="mx-1 text-muted-foreground">/</span>
+              )}
+              {slide.deck?.name && (
+                <span className="font-semibold">{slide.deck.name}</span>
+              )}
+              {(slide.series?.name || slide.deck?.name) && (
+                <span className="mx-1 text-muted-foreground">-</span>
+              )}
+              <span>Page {slide.number}</span>
+            </span>
           </CardTitle>
-          <div className="flex items-center gap-2">
-            {slide.deck && (
-              <span className="text-sm text-muted-foreground bg-secondary px-2 py-1 rounded">
-                {slide.deck.name}
-              </span>
-            )}
-            {slide.series && (
-              <span className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded">
-                {slide.series.name}
-              </span>
-            )}
-          </div>
         </div>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column: PDF Preview (2/3 width on large screens) */}
           <div className="space-y-4 lg:col-span-2">
             <SimplePDFPreview
               deckId={slide.deck_uuid}
@@ -86,24 +82,6 @@ export function SlideSearchResult({
               deckName={slide.deck?.name}
               searchWords={searchTerm.split(/\s+/).filter(Boolean)}
             />
-
-            <div className="flex justify-center">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  if (slide.deck_uuid) {
-                    window.open(
-                      `${BACKEND_BASE_URL}/api/slide-decks/${slide.deck_uuid}/pdf#page=${slide.number}`,
-                      "_blank",
-                    );
-                  }
-                }}
-              >
-                <ExternalLink className="mr-2 h-4 w-4" />
-                View Full PDF
-              </Button>
-            </div>
           </div>
 
           {/* Right Column: Slide Details and Content (1/3 width on large screens) */}

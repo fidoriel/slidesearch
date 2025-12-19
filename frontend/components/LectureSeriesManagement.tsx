@@ -2,6 +2,15 @@ import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+  DialogTrigger,
+} from "./ui/dialog";
+import {
   Card,
   CardHeader,
   CardTitle,
@@ -22,6 +31,7 @@ interface LectureSeries {
 export function LectureSeriesManagement() {
   const [lectureSeries, setLectureSeries] = useState<LectureSeries[]>([]);
   const [newSeriesName, setNewSeriesName] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [editingSeries, setEditingSeries] = useState<{ [key: string]: string }>(
     {},
   );
@@ -72,6 +82,7 @@ export function LectureSeriesManagement() {
       const newSeries = await response.json();
       setLectureSeries([...lectureSeries, newSeries]);
       setNewSeriesName("");
+      setDialogOpen(false);
       toast({
         title: "Success",
         description: "Lecture series created successfully",
@@ -121,9 +132,6 @@ export function LectureSeriesManagement() {
     if (!newName?.trim()) return;
 
     try {
-      // Aktuell gibt es keine direkte Update-Endpunkt für LectureSeries
-      // Wir könnten einen neuen erstellen oder die Serie löschen und neu anlegen
-      // Für jetzt zeigen wir nur eine Nachricht
       toast({
         title: "Info",
         description: "Lecture series name update not yet implemented",
@@ -159,40 +167,50 @@ export function LectureSeriesManagement() {
 
   return (
     <div className="space-y-6">
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-lg">Create New Lecture Series</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-4">
-            <Input
-              type="text"
-              placeholder="Enter series name (e.g., 'Introduction to AI')"
-              value={newSeriesName}
-              onChange={(e) => setNewSeriesName(e.target.value)}
-              onKeyPress={(e) => e.key === "Enter" && handleCreateSeries()}
-              className="flex-1"
-            />
-            <Button
-              onClick={handleCreateSeries}
-              disabled={!newSeriesName.trim()}
-            >
+      <div className="mb-6">
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogTrigger asChild>
+            <Button variant="default" onClick={() => setDialogOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
-              Create Series
+              New Lecture Series
             </Button>
-          </div>
-          {newSeriesName.trim() && (
-            <p className="text-sm text-muted-foreground mt-2">
-              Press Enter or click "Create Series" to add "
-              {newSeriesName.trim()}"
-            </p>
-          )}
-        </CardContent>
-      </Card>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New Lecture Series</DialogTitle>
+            </DialogHeader>
+            <div className="flex flex-col gap-4 py-2">
+              <Input
+                type="text"
+                placeholder="Name der Serie (z.B. 'Introduction to AI')"
+                value={newSeriesName}
+                onChange={(e) => setNewSeriesName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleCreateSeries()}
+                className="flex-1"
+                autoFocus
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                onClick={handleCreateSeries}
+                disabled={!newSeriesName.trim()}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Erstellen
+              </Button>
+              <DialogClose asChild>
+                <Button variant="outline" onClick={() => setDialogOpen(false)}>
+                  Abbrechen
+                </Button>
+              </DialogClose>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {lectureSeries.map((series) => (
-          <Card key={series.uuid} className="flex flex-col">
+          <Card key={series.uuid} className="flex flex-col border">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               {editingSeries[series.uuid] !== undefined ? (
                 <div className="flex-1">

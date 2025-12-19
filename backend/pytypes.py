@@ -8,7 +8,6 @@ from typing import Type, TypeVar, ClassVar
 from pydantic import field_serializer
 from uuid import uuid4
 import json
-from uuid import UUID
 import time
 
 
@@ -17,7 +16,8 @@ class UUIDEncoder(json.JSONEncoder):
         if isinstance(obj, UUID):
             return obj.hex
         return json.JSONEncoder.default(self, obj)
-    
+
+
 VALKEY_GLOBAL_PREFIX = "slidesearch"
 T = TypeVar("T", bound="StorageMixin")
 
@@ -26,26 +26,28 @@ search = meilisearch.Client(
     url=f"http://{config.MEILISEARCH_HOST}:{config.MEILISEARCH_PORT}",
 )
 
+
 def get_index():
     try:
-        index = search.get_index('slides')
+        index = search.get_index("slides")
         return index
     except meilisearch.errors.MeilisearchApiError:
-        search.create_index('slides', {'primaryKey': 'uuid'})
+        search.create_index("slides", {"primaryKey": "uuid"})
         for _ in range(5):
             try:
-                index = search.get_index('slides')
+                index = search.get_index("slides")
                 return index
             except meilisearch.errors.MeilisearchApiError:
                 time.sleep(0.2)
         else:
-            raise RuntimeError("MeiliSearch index 'slides' could not be created or fetched.")
-        
+            raise RuntimeError(
+                "MeiliSearch index 'slides' could not be created or fetched."
+            )
+
+
 index = get_index()
-index.update_filterable_attributes([
-  'uuid',
-  'deck_uuid'
-])
+index.update_filterable_attributes(["uuid", "deck_uuid"])
+
 
 class StorageMixin:
     VALKEY_OBJECT_PATH: ClassVar[str]
@@ -84,6 +86,7 @@ class StorageMixin:
         valkey.set(self.valkey_instance_path(), self.model_dump_json())
         valkey.sadd(self.valkey_path(), str(self.uuid))
 
+
 class Slide(BaseModel, StorageMixin):
     VALKEY_OBJECT_PATH: ClassVar[str] = "slide"
     uuid: UUID = Field(default_factory=uuid4)
@@ -99,7 +102,7 @@ class Slide(BaseModel, StorageMixin):
         deck = SlideDeck.get(self.deck_uuid)
         with open(deck.path, "rb") as f:
             return f.read()
-    
+
     @property
     def series(self) -> "LectureSeries":
         return LectureSeries.get(self.deck.series_uuid)
@@ -108,7 +111,7 @@ class Slide(BaseModel, StorageMixin):
     def deck(self) -> "SlideDeck":
         return SlideDeck.get(self.deck_uuid)
 
-    @field_serializer('uuid', 'deck_uuid', mode='plain')
+    @field_serializer("uuid", "deck_uuid", mode="plain")
     def serialize_uuids(self, value):
         return str(value)
 
@@ -132,15 +135,13 @@ class LectureSeries(BaseModel, StorageMixin):
     slide_deck_uuids: list[str] | None = None
     slide_decks: list[str] | None = None
 
-    @field_serializer('slide_deck_uuids', mode='plain')
+    @field_serializer("slide_deck_uuids", mode="plain")
     def serialize_slide_deck_uuids(self, value):
         return [
-            str(deck.uuid)
-            for deck in SlideDeck.list()
-            if deck.series_uuid == self.uuid
+            str(deck.uuid) for deck in SlideDeck.list() if deck.series_uuid == self.uuid
         ]
 
-    @field_serializer('slide_decks', mode='plain')
+    @field_serializer("slide_decks", mode="plain")
     def serialize_slide_decks(self, value):
         return [
             deck.model_dump()
@@ -148,18 +149,25 @@ class LectureSeries(BaseModel, StorageMixin):
             if deck.series_uuid == self.uuid
         ]
 
+    def get_decks(self) -> list[SlideDeck]:
+        return [deck for deck in SlideDeck.list() if deck.series_uuid == self.uuid]
 
-def search_slides(query_text: str, decks: list[UUID] | None = None) -> list[Slide]:
+
+def search_slides(query_text: str, decks: list[SlideDeck] | None = None) -> list[Slide]:
     filter_query = None
-    if decks:
-        deck_uuids = [str(d) for d in decks]
-        filter_query = f'deck_uuid IN [{", ".join(f""""{u}""" for u in deck_uuids)}]'
-    results = index.search(query_text)
+
+    if decks is not None:
+        if len(decks) == 0:
+            return []
+        deck_uuids = [str(d.uuid) for d in decks]
+        filter_query = [f'deck_uuid = "{u}"' for u in deck_uuids]
+        results = index.search(query_text, {"filter": filter_query})
+    else:
+        results = index.search(query_text)
+
     slides = []
-    for hit in results['hits']:
-        slide = Slide.get(UUID(hit['uuid']))
+    for hit in results["hits"]:
+        slide = Slide.get(UUID(hit["uuid"]))
         if slide:
             slides.append(slide)
-
-    docs = index.get_documents()
     return slides

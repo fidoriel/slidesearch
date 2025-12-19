@@ -48,9 +48,6 @@ export function SimplePDFPreview({
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-sm font-medium">
-          {deckName ? `${deckName} - ` : ""}Page {pageNumber}
-        </h3>
         <div>
           <Button
             variant="outline"

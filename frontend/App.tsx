@@ -14,10 +14,6 @@ import NotFound from "./NotFound";
 import { LectureSeriesManagement } from "./components/LectureSeriesManagement";
 import { LectureSeriesDetail } from "./components/LectureSeriesDetail";
 import { SearchInterface } from "./components/SearchInterface";
-import {
-  ExportDataButton,
-  ImportDataButton,
-} from "./components/DataManagementButtons";
 
 const ACTIVE_NAV = "text-sm font-medium text-primary";
 const NON_ACTIVE_NAV =
@@ -48,8 +44,6 @@ function Navbar() {
           </NavLink>
         </nav>
         <div className="ml-auto flex items-center space-x-2">
-          <ImportDataButton />
-          <ExportDataButton />
           <ModeToggle />
         </div>
       </div>
@@ -63,7 +57,9 @@ function App() {
       <BrowserRouter>
         <div className="flex flex-col min-h-screen">
           <Navbar />
-          <main className="flex-1 container mx-auto py-6">
+          <main className="flex-1 container mx-auto px-4 py-6">
+            {" "}
+            {/*w-full max-w-full*/}
             <Routes>
               <Route path="/" element={<Navigate to="/search" replace />} />
               <Route path="/search" element={<SearchInterface />} />

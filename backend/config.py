@@ -1,7 +1,7 @@
-import os
 from typing import Optional, List
 from pydantic_settings import BaseSettings
 from pathlib import Path
+
 
 class Settings(BaseSettings):
     APP_NAME: str = "SlideSearch"
@@ -27,10 +27,13 @@ class Settings(BaseSettings):
 
     def get_valkey_url(self) -> str:
         auth_part = f":{self.VALKEY_PASSWORD}@" if self.VALKEY_PASSWORD else "@"
-        return f"redis://{auth_part}{self.VALKEY_HOST}:{self.VALKEY_PORT}/{self.VALKEY_DB}"
+        return (
+            f"redis://{auth_part}{self.VALKEY_HOST}:{self.VALKEY_PORT}/{self.VALKEY_DB}"
+        )
 
     def get_meilisearch_url(self) -> str:
         return f"http://{self.MEILISEARCH_HOST}:{self.MEILISEARCH_PORT}"
+
 
 config = Settings()
 config.DATA_DIR.mkdir(exist_ok=True)
