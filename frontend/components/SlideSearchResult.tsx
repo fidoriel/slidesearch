@@ -1,12 +1,7 @@
 import React from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "./ui/card";
 import { Button } from "./ui/button";
-import {
-  BookOpen,
-  FileText,
-  ExternalLink,
-  ChevronDown,
-} from "lucide-react";
+import { BookOpen, FileText, ExternalLink, ChevronDown } from "lucide-react";
 
 import { SimplePDFPreview } from "./SimplePDFPreview";
 import { BACKEND_BASE_URL } from "../lib/api";
@@ -60,7 +55,7 @@ export function SlideSearchResult({
   };
 
   return (
-  <Card className="mb-6">
+    <Card className="mb-6">
       <CardHeader className="pb-2 cursor-pointer" onClick={onSelect}>
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2">
@@ -87,10 +82,9 @@ export function SlideSearchResult({
           <div className="space-y-4 lg:col-span-2">
             <SimplePDFPreview
               deckId={slide.deck_uuid}
-              pageNumber={slide.number}
+              initialPageNumber={slide.number}
               deckName={slide.deck?.name}
-              width={600}
-              height={500}
+              searchWords={searchTerm.split(/\s+/).filter(Boolean)}
             />
 
             <div className="flex justify-center">
