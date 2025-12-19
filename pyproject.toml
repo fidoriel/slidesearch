@@ -6,7 +6,6 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.125.0",
-    "markitdown[all]>=0.1.4",
     "meilisearch>=0.38.0",
     "mistralai>=1.9.11",
     "ollama>=0.6.1",
@@ -14,6 +13,7 @@ dependencies = [
     "pydantic>=2.12.5",
     "pydantic-settings>=2.12.0",
     "python-multipart>=0.0.21",
+    "thepipe-api>=1.7.1",
     "uvicorn>=0.38.0",
     "valkey>=6.1.1",
     "vllm>=0.12.0",

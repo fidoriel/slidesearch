@@ -7,7 +7,8 @@ from .pytypes import Slide, SlideDeck, LectureSeries
 import hashlib
 from .config import config
 import openai
-
+from thepipe.scraper import scrape_file
+from thepipe.chunker import chunk_by_page
 
 
 def pdf_to_image(pdf: bytes):
@@ -52,32 +53,32 @@ async def call_openai_ocr(slide: bytes) -> str:
     return response.choices[0].message.content
 
 async def process_slide_deck(series: LectureSeries, deck_bytes: bytes):
-
-
     deck = SlideDeck(
         series_uuid=series.uuid,
         file_hash=hashlib.sha256(deck_bytes).hexdigest(),
         name="",
         path=config.DATA_DIR / f"{uuid4()}.pdf"
     )
-
-
     with open(deck.path, "wb") as f:
         f.write(deck_bytes)
+
+    chunks = scrape_file(
+        filepath=str(deck.path),
+    )
+    content_scrape = chunk_by_page(chunks)
 
     slides: list[Slide] = []
 
     for i, img in enumerate(pdf_to_image(deck_bytes)):
         slide_text = await call_openai_ocr(img)
+        chunk_text = getattr(content_scrape[i], "text", str(content_scrape[i]))
         slide = Slide(
-            number=i,
+            number=i+1,
             deck_uuid=deck.uuid,
-            content_scrape="",
+            content_scrape=chunk_text,
             content_ocr=slide_text,
         )
         slides.append(slide)
-        print(slide_text)
-        print(f"finished slide {i}")
 
     deck.save()
     for slide in slides:

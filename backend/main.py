@@ -6,6 +6,8 @@ from .pytypes import LectureSeries, SlideDeck, Slide
 from .slide_deck_processor import process_slide_deck
 from fastapi import Query
 from .pytypes import search_slides, index
+import json
+import os
 
 
 app = FastAPI()
@@ -100,6 +102,13 @@ async def search_slides_endpoint(
 ) -> List[Slide]:
     return search_slides(query, decks)
 
+@api_router.get("/slide-decks/{deck_id}")
+async def get_slide_deck(deck_id: UUID):
+    deck = SlideDeck.get(deck_id)
+    if not deck:
+        raise HTTPException(status_code=404, detail="Slide deck not found")
+    return deck
+
 @api_router.get("/slide-decks/{deck_id}/pdf")
 async def get_slide_deck_pdf(deck_id: UUID):
     deck = SlideDeck.get(deck_id)
@@ -120,5 +129,65 @@ async def get_slide_deck_pdf(deck_id: UUID):
             "Content-Length": str(len(pdf_content))
         }
     )
+
+@api_router.get("/export")
+async def export_data():
+    try:
+        # Get all lecture series
+        series_list = LectureSeries.list()
+        
+        # Get all slide decks
+        decks_list = SlideDeck.list()
+        
+        # Get all slides
+        slides_list = Slide.list()
+        
+        # Create export data structure
+        export_data = {
+            "lecture_series": [series.model_dump() for series in series_list],
+            "slide_decks": [deck.model_dump() for deck in decks_list],
+            "slides": [slide.model_dump() for slide in slides_list]
+        }
+        
+        return export_data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/import")
+async def import_data(file: UploadFile = File(...)):
+    try:
+        # Read the uploaded file
+        content = await file.read()
+        data = json.loads(content.decode('utf-8'))
+        
+        # Clear existing data
+        for series in LectureSeries.list():
+            LectureSeries.delete(series.uuid)
+        
+        for deck in SlideDeck.list():
+            SlideDeck.delete(deck.uuid)
+        
+        for slide in Slide.list():
+            Slide.delete(slide.uuid)
+        
+        # Import lecture series
+        for series_data in data.get("lecture_series", []):
+            series = LectureSeries(**series_data)
+            series.save()
+        
+        # Import slide decks
+        for deck_data in data.get("slide_decks", []):
+            deck = SlideDeck(**deck_data)
+            deck.save()
+        
+        # Import slides and re-index
+        for slide_data in data.get("slides", []):
+            slide = Slide(**slide_data)
+            slide.save()
+            slide.index()
+        
+        return {"message": "Data imported successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 app.include_router(api_router, prefix="/api")

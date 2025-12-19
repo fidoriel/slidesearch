@@ -11,8 +11,8 @@ valkey speichert so oft wie es geht. bei server start wird ein mal geschaut, das
 schreibe eine funktiion zum dumpen und laden des valkey contents.
 
 react UX:
-gibt eine hirarchie aus 
+gibt eine hirarchie aus
 LectureSeries hat viele slide decks
 
 fastapi backend:
-/api/*
+/api/\*
