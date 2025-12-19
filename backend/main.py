@@ -19,6 +19,8 @@ app.add_middleware(
 )
 
 
+Slide.index_all()
+
 @api_router.post("/lecture-series/", response_model=LectureSeries)
 async def create_lecture_series(lecture_series_data: dict) -> LectureSeries:
     name = lecture_series_data.get("name")

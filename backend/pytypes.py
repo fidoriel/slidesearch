@@ -115,6 +115,13 @@ class Slide(BaseModel, StorageMixin):
     def serialize_uuids(self, value):
         return str(value)
 
+    @classmethod
+    def index_all(cls):
+        slides = cls.list()
+        if not slides:
+            return
+        docs = [slide.model_dump() for slide in slides]
+        index.add_documents(docs)
 
 class SlideDeck(BaseModel, StorageMixin):
     VALKEY_OBJECT_PATH: ClassVar[str] = "slidedeck"
@@ -126,7 +133,6 @@ class SlideDeck(BaseModel, StorageMixin):
     @property
     def path(self) -> Path:
         return config.DATA_DIR / f"{self.uuid}.pdf"
-
 
 class LectureSeries(BaseModel, StorageMixin):
     VALKEY_OBJECT_PATH: ClassVar[str] = "lectureseries"
