@@ -70,6 +70,16 @@ export function SimplePDFPreview({
           >
             Next
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              window.open(`${pdfUrl}#page=${pageNumber}`, "_blank")
+            }
+            className="ml-2"
+          >
+            Open in PDF Reader
+          </Button>
         </div>
       </div>
       <Document
