@@ -7,10 +7,11 @@ import hashlib
 import openai
 from thepipe.scraper import scrape_file
 from thepipe.chunker import chunk_by_page
+import asyncio
 
 
-def pdf_to_image(pdf: bytes):
-    images = convert_from_bytes(pdf)
+async def pdf_to_image_async(pdf: bytes):
+    images = await asyncio.to_thread(convert_from_bytes, pdf)
     for img in images:
         buf = io.BytesIO()
         img.save(buf, format="PNG")
@@ -66,9 +67,12 @@ async def process_slide_deck(
     content_scrape = chunk_by_page(chunks)
 
     slides: list[Slide] = []
+    images = [img async for img in pdf_to_image_async(deck_bytes)]
+    ocr_tasks = [call_openai_ocr(img) for img in images]
+    ocr_results = await asyncio.gather(*ocr_tasks)
 
-    for i, img in enumerate(pdf_to_image(deck_bytes)):
-        slide_text = await call_openai_ocr(img)
+    for i, _ in enumerate(ocr_tasks):
+        slide_text = ocr_results[i]
         chunk_text = getattr(content_scrape[i], "text", str(content_scrape[i]))
         slide = Slide(
             number=i + 1,

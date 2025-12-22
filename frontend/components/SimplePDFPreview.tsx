@@ -46,8 +46,8 @@ export function SimplePDFPreview({
   };
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-2">
+    <div className="w-full max-w-3xl mx-auto flex flex-col items-center">
+      <div className="flex items-center justify-between mb-2 w-full">
         <div>
           <Button
             variant="outline"
@@ -82,18 +82,24 @@ export function SimplePDFPreview({
           </Button>
         </div>
       </div>
-      <Document
-        file={pdfUrl}
-        onLoadSuccess={onDocumentLoadSuccess}
+      <div
         className="w-full flex items-center justify-center"
+        style={{ aspectRatio: "16/9", maxHeight: 600, maxWidth: "100%" }}
       >
-        <Page
-          pageNumber={pageNumber}
-          renderAnnotationLayer={true}
-          renderTextLayer={true}
-          customTextRenderer={customTextRenderer}
-        />
-      </Document>
+        <Document
+          file={pdfUrl}
+          onLoadSuccess={onDocumentLoadSuccess}
+          className="w-full h-full flex items-center justify-center"
+        >
+          <Page
+            pageNumber={pageNumber}
+            renderAnnotationLayer={true}
+            renderTextLayer={true}
+            customTextRenderer={customTextRenderer}
+            width={900}
+          />
+        </Document>
+      </div>
       <p className="mt-2 text-center text-xs text-muted-foreground">
         Page {pageNumber} of {numPages}
       </p>

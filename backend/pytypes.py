@@ -170,14 +170,20 @@ def search_slides(query_text: str, decks: list[SlideDeck] | None = None) -> list
         deck_uuids = [str(d.uuid) for d in decks]
         filter_query = [
             [f'deck_uuid = "{u}"' for u in deck_uuids]
-        ]  # double list is needed for OR
+        ]  # double nested list is needed for OR
         results = index.search(query_text, {"filter": filter_query})
     else:
         results = index.search(query_text)
 
+    # tmp dedupe logic
     slides = []
+    seen_uuids = set()
+
     for hit in results["hits"]:
-        slide = Slide.get(UUID(hit["uuid"]))
-        if slide:
-            slides.append(slide)
+        slide_uuid = UUID(hit["uuid"])
+        if slide_uuid not in seen_uuids:
+            slide = Slide.get(slide_uuid)
+            if slide:
+                slides.append(slide)
+                seen_uuids.add(slide_uuid)
     return slides
