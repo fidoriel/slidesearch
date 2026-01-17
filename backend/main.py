@@ -7,9 +7,16 @@ from fastapi import Query
 from .pytypes import search_slides, index
 import asyncio
 from contextlib import asynccontextmanager
+from pydantic import BaseModel
+from typing import Literal
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
 
 slide_deck_queue = asyncio.Queue()
 
+class HealthzResponse(BaseModel):
+    status: Literal["healthy"]
 
 async def slide_deck_worker():
     while True:
@@ -180,3 +187,17 @@ async def get_slide_deck_pdf(deck_id: UUID):
 
 
 app.include_router(api_router, prefix="/api")
+
+@app.get("/healthz", response_model=HealthzResponse)
+async def healthz() -> HealthzResponse:
+    return HealthzResponse(status="healthy")
+
+
+app.include_router(api_router, prefix="/api")
+
+app.mount("", StaticFiles(directory="dist/", html=True, check_dir=True), name="dist")
+
+
+@app.exception_handler(404)
+async def http_exception_handler(request, exc):
+    return FileResponse("dist/index.html")
