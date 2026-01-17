@@ -6,8 +6,30 @@ from .slide_deck_processor import process_slide_deck
 from fastapi import Query
 from .pytypes import search_slides, index
 import asyncio
+from contextlib import asynccontextmanager
 
-app = FastAPI()
+slide_deck_queue = asyncio.Queue()
+
+
+async def slide_deck_worker():
+    while True:
+        series, deck_bytes, filename = await slide_deck_queue.get()
+        try:
+            await process_slide_deck(series, deck_bytes, filename)
+        except Exception as e:
+            print(f"Error processing slide deck {filename}: {e}")
+        finally:
+            slide_deck_queue.task_done()
+
+
+@asynccontextmanager
+async def lifespan(app):
+    worker_task = asyncio.create_task(slide_deck_worker())
+    yield
+    worker_task.cancel()
+
+
+app = FastAPI(lifespan=lifespan)
 api_router = APIRouter()
 
 app.add_middleware(
@@ -62,19 +84,12 @@ async def upload_decks_to_lecture_series(
     if not series:
         raise HTTPException(status_code=404, detail="Lecture series not found")
 
-    async def process_file_background(series, deck_bytes, filename):
-        try:
-            await process_slide_deck(series, deck_bytes, filename)
-        except Exception as e:
-            print(e)
-            pass
-
     for file in files:
         deck_bytes = await file.read()
-        asyncio.create_task(process_file_background(series, deck_bytes, file.filename))
+        await slide_deck_queue.put((series, deck_bytes, file.filename))
 
     return {
-        "message": f"Batch upload started for {len(files)} file(s). Processing in background."
+        "message": f"Batch upload queued for {len(files)} file(s). Processing sequentially in background."
     }
 
 
