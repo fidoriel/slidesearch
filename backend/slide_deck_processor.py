@@ -67,22 +67,31 @@ async def process_slide_deck(
     content_scrape = chunk_by_page(chunks)
 
     slides: list[Slide] = []
-    images = [img async for img in pdf_to_image_async(deck_bytes)]
-    ocr_tasks = [call_openai_ocr(img) for img in images]
-    ocr_results = await asyncio.gather(*ocr_tasks)
+    images = []
+    try:
+        images = [img async for img in pdf_to_image_async(deck_bytes)]
+        ocr_tasks = [call_openai_ocr(img) for img in images]
+        ocr_results = await asyncio.gather(*ocr_tasks)
 
-    for i, _ in enumerate(ocr_tasks):
-        slide_text = ocr_results[i]
-        chunk_text = getattr(content_scrape[i], "text", str(content_scrape[i]))
-        slide = Slide(
-            number=i + 1,
-            deck_uuid=deck.uuid,
-            content_scrape=chunk_text,
-            content_ocr=slide_text,
-        )
-        slides.append(slide)
+        for i, _ in enumerate(ocr_tasks):
+            slide_text = ocr_results[i]
+            chunk_text = getattr(content_scrape[i], "text", str(content_scrape[i]))
+            slide = Slide(
+                number=i + 1,
+                deck_uuid=deck.uuid,
+                content_scrape=chunk_text,
+                content_ocr=slide_text,
+            )
+            slides.append(slide)
+            if i < len(images):
+                del images[i]
 
-    deck.save()
-    for slide in slides:
-        slide.save()
-        slide.index()
+        deck.save()
+        for slide in slides:
+            slide.save()
+            slide.index()
+    finally:
+        del images
+        del ocr_results
+        del ocr_tasks
+        del slides

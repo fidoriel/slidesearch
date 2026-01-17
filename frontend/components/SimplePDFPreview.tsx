@@ -5,7 +5,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   import.meta.url,
 ).toString();
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { pdfjs } from "react-pdf";
 import { BACKEND_BASE_URL } from "../lib/api";
 import { Document, Page } from "react-pdf";
@@ -26,7 +26,21 @@ export function SimplePDFPreview({
 }: SimplePDFPreviewProps) {
   const [numPages, setNumPages] = useState<number>();
   const [pageNumber, setPageNumber] = useState<number>(initialPageNumber);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [pageWidth, setPageWidth] = useState<number | undefined>(undefined);
   const pdfUrl = `${BACKEND_BASE_URL}/api/slide-decks/${deckId}/pdf`;
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    setPageWidth(containerRef.current.clientWidth);
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setPageWidth(entry.contentRect.width);
+      }
+    });
+    ro.observe(containerRef.current);
+    return () => ro.disconnect();
+  }, [containerRef]);
 
   function onDocumentLoadSuccess({ numPages }: { numPages: number }): void {
     setNumPages(numPages);
@@ -83,8 +97,9 @@ export function SimplePDFPreview({
         </div>
       </div>
       <div
-        className="w-full flex items-center justify-center"
-        style={{ aspectRatio: "16/9", maxHeight: 600, maxWidth: "100%" }}
+        ref={containerRef}
+        className="w-full flex items-center justify-center overflow-hidden"
+        style={{ aspectRatio: "16/9", maxHeight: "min(60vh, 600px)", maxWidth: "100%" }}
       >
         <Document
           file={pdfUrl}
@@ -96,7 +111,7 @@ export function SimplePDFPreview({
             renderAnnotationLayer={true}
             renderTextLayer={true}
             customTextRenderer={customTextRenderer}
-            width={900}
+            width={pageWidth ? Math.floor(pageWidth) : undefined}
           />
         </Document>
       </div>
